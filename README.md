@@ -1,131 +1,243 @@
-# B+ Tree Implementation in C++
+Perfect ✅ — here’s an enhanced version of the **README.md** with clear **theoretical explanations** and **ASCII diagrams** for both **B+ Trees** and **Extendible Hashing**.
+It’s written in a style suitable for GitHub (clean Markdown, visually structured, and beginner-friendly).
 
-This repository contains a complete implementation of a B+ tree in C++, supporting insertion, deletion, and search operations. The implementation includes a simple command-line interface (Terminal Wizard) to interactively operate on the tree and visualize its structure.
+---
 
-## Features
+# 🌳 B+ Tree and Extendible Hashing Implementations in C++
 
-* **Dynamic B+ Tree**: Supports configurable order (`m`) for internal nodes and leaf node capacity (`m_leaf`).
-* **Insertion**: Inserts keys, splits nodes when full, and promotes keys up the tree.
-* **Deletion**: Removes keys, handles underflow via redistribution or merging, and adjusts the tree root when empty.
-* **Search**: Finds if a key exists in the tree in O(log n) time.
-* **Visualization**: Prints the tree level-by-level to the console for easy debugging.
-* **Parent Pointers**: Maintains parent pointers for efficient upward operations.
+This repository contains **complete C++ implementations** of two classic data structures widely used in **database indexing** and **storage systems**:
 
-## Directory Structure
+* **B+ Tree** – for ordered, range-based indexing
+* **Extendible Hashing** – for fast, dynamic hash-based lookup
+
+Both implementations include **interactive terminal interfaces** that let you **insert**, **delete**, **search**, and **visualize** how the structures evolve step-by-step.
+
+---
+
+## 📘 1. B+ Tree Implementation
+
+A **B+ Tree** is a multi-level balanced tree used in databases and filesystems for efficient **search, insertion, and range queries**.
+It maintains sorted data and minimizes disk I/O by grouping keys into nodes.
+
+### 🧠 Concept Overview
+
+* Each **internal node** stores keys and child pointers.
+* **Leaf nodes** store actual records (keys/values) and are linked for sequential access.
+* When a node overflows, it **splits**, and keys are **promoted** up.
+* When underflow occurs, nodes **merge or redistribute** keys.
+
+### 📊 Structure Example
+
+```
+               [ 20 40 ]
+              /    |    \
+         [10]   [30]   [50 60]
+```
+
+Each `[ ... ]` represents a node.
+Leaf nodes (bottom) contain actual keys or data pointers.
+
+---
+
+### ✨ Features
+
+* **Dynamic Order**: Configurable branching factor (`m`) and leaf capacity (`m_leaf`).
+* **Insertion/Deletion**: Fully supports node split, merge, and key redistribution.
+* **Search**: Efficient O(log n) lookup.
+* **Visualization**: Level-order printing of tree structure.
+* **Parent Pointers**: Enables quick upward traversal and restructuring.
+
+---
+
+### 🗂 Directory Structure
 
 ```
 ├── src
-│   └── BPlusTree.cpp     # Main implementation and CLI
-└── README.md             # This file
+│   └── BPlusTree.cpp     # Implementation and CLI
 ```
 
-> **Note**: In this repository, all code is contained in `BPlusTree.cpp`. You may rename or reorganize into multiple files as needed.
-
-## Requirements
-
-* C++11 (or later) compiler (e.g., g++, clang++)
-
-## Compilation
-
-Compile the code using your preferred C++ compiler. For example:
+### ⚙️ Compilation
 
 ```bash
 g++ -std=c++11 -O2 -o bptree BPlusTree.cpp
 ```
 
-* `-std=c++11` enables modern C++ features.
-* `-O2` turns on optimizations.
-* `-o bptree` names the output executable `bptree`.
-
-## Usage
-
-Run the compiled executable and follow the on-screen wizard:
+### ▶️ Usage
 
 ```bash
 ./bptree
 ```
 
-1. **Enter `m` and `m_leaf`**: Specify the order of internal nodes (`m`) and the maximum keys in a leaf (`m_leaf`).
-2. **Terminal Wizard Commands**:
+#### Commands
 
-   * `i <value>`: Insert a key with value `<value>`.
-   * `d <value>`: Delete a key with value `<value>`.
-   * `s <value>`: Search for a key with value `<value>`.
-   * `p`:      Print the current B+ tree structure.
-   * `h`:      Display the wizard commands again.
-   * `q`:      Quit the application.
+```
+i <value>   Insert a key
+d <value>   Delete a key
+s <value>   Search a key
+p           Print the tree structure
+h           Show help
+q           Quit
+```
 
-Example session:
+#### Example Session
 
 ```
 Enter m , m_leaf: 4 3
-
-------Terminal Wizard------
-
-CommandSyntax   Action
----------------------------
-p         Print the B+ tree structure.
-i <value> Insert a key.
-d <value> Delete a key.
-s <value> Search a key.
-h         Show commands.
-q         Quit.
-
-Enter Command: > i 10
-Successfully Inserted!
-
-Enter Command: > i 20
-Successfully Inserted!
-
-Enter Command: > p
-B+ tree structure...
-[ 10 20 ]
-
-Enter Command: > q
-bye!
+> i 10
+> i 20
+> i 30
+> p
+[ 10 20 30 ]
 ```
 
-## Code Overview
+---
 
-### `Node` Class
+## 🧮 2. Extendible Hashing Implementation
 
-* **Members**:
+**Extendible Hashing** is a **dynamic hash table** that automatically expands or shrinks based on the number of inserted keys.
+It’s particularly efficient for disk-based hash indexing where collisions need controlled management.
 
-  * `ll cur_size`: Number of keys currently in the node.
-  * `ll size`: Capacity parameter (leaf or internal).
-  * `bool isLeaf`: Flag indicating leaf or internal node.
-  * `vector<ll> keyValues`: Container for keys.
-  * `vector<Node*> pointerValues`: Child pointers (internal) or data/leaf pointers.
-  * `Node* parent`: Pointer to the parent node.
+---
 
-* **Key Methods**:
+### 🧠 Concept Overview
 
-  * `insert_key(key)`: Inserts a key into the node and keeps it sorted.
-  * `insert_with_pointer(key, left, right)`: Inserts a key with two child pointers (after split).
-  * `delete_key(key)`: Removes a key and shifts subsequent keys.
-  * `get_pointer_from_key(key)`: Chooses the child index to descend for a given key.
-  * `print()`: Displays the node's keys.
+* Each **directory entry** points to a **bucket**.
+* Each bucket has a **local depth** – how many bits of the hash it uses.
+* The directory has a **global depth** – how many bits are used overall.
+* When a bucket overflows:
 
-### `BPlusTree` Class
+  * If its local depth < global depth → **split bucket**.
+  * If local depth = global depth → **double the directory** (expand).
 
-* **Member**:
+---
 
-  * `Node* root`: Root pointer of the B+ tree.
+### 📊 Visualization Example
 
-* **Key Methods**:
+#### Initial (Global Depth = 1)
 
-  * `insertHandler(key)`: Public API to insert a key, handles root creation.
-  * `deleteHandler(key)`: Public API to delete a key, adjusts root if empty.
-  * `searchHandler(key)`: Returns `true` if the key exists.
-  * `print_directory(root)`: Level-order print of the tree.
-  * Internal helpers for splitting (`split_leaf`, `split_node`), merging, redistribution, and pointer updates.
+```
+Directory:
+0 → Bucket A
+1 → Bucket B
 
-## Limitations and TODOs
+Each bucket stores up to 2 elements.
+```
 
-* **Memory Management**: The `Node` destructor clears vectors but does not recursively delete child nodes, which may cause memory leaks.
-* **Efficiency**: Uses `sort` on every insert in a node; for large node capacities, consider binary search + shift.
-* **Error Handling**: Minimal checks on invalid input (e.g., small `m` values) and pointer bounds.
+#### After Expansion (Global Depth = 2)
 
-## License
+```
+Directory:
+00 → Bucket A
+01 → Bucket B
+10 → Bucket A   <-- Points to same bucket as 00
+11 → Bucket C   <-- New bucket after split
+```
 
-This code is provided under the MIT License. See `LICENSE` for details.
+👉 Notice: Buckets with **local depth < global depth** are pointed to by **multiple directory entries**.
+
+---
+
+### ✨ Features
+
+* **Automatic Directory Expansion** on overflow.
+* **Bucket Splitting and Merging** with local depth tracking.
+* **Directory Shrinking** when possible.
+* **Set-Based Storage** for unique keys.
+* **Interactive Menu Interface** for easy testing.
+
+---
+
+### 🗂 Directory Structure
+
+```
+├── src
+│   └── ExtendibleHashing.cpp     # Implementation and CLI
+```
+
+### ⚙️ Compilation
+
+```bash
+g++ -std=c++11 -O2 -o extendible ExtendibleHashing.cpp
+```
+
+### ▶️ Usage
+
+```bash
+./extendible
+```
+
+#### Menu Options
+
+```
+1 → Insert element
+2 → Delete element
+3 → Print directory
+4 → Exit
+```
+
+#### Example Session
+
+```
+Enter your choice :
+1 for Insertion
+2 for Deletion
+3 to print Directory Structure
+4 to Exit
+: 1
+Enter element to insert : 12
+
+: 3
+********************
+00        4 12
+01        8
+10        4 12
+11        8
+********************
+```
+
+Each directory entry shows:
+
+* Binary directory index (`00`, `01`, etc.)
+* Keys inside the corresponding bucket.
+
+---
+
+## ⚖️ Comparison
+
+| Feature                | B+ Tree                   | Extendible Hashing    |
+| ---------------------- | ------------------------- | --------------------- |
+| **Structure**          | Balanced multi-level tree | Directory of buckets  |
+| **Access Time**        | O(log n)                  | O(1) average          |
+| **Order Preservation** | Yes (sorted keys)         | No                    |
+| **Splitting Behavior** | Node splits upward        | Bucket splits locally |
+| **Best Use Case**      | Range queries             | Point queries         |
+| **Growth Mechanism**   | Node splitting            | Directory doubling    |
+
+---
+
+## 🧱 Project Layout
+
+```
+├── src
+│   ├── BPlusTree.cpp
+│   └── ExtendibleHashing.cpp
+└── README.md
+```
+
+---
+
+## 🧰 Requirements
+
+* C++11 or later
+* Any modern compiler (`g++`, `clang++`, or MSVC)
+
+---
+
+## 📄 License
+
+Licensed under the **MIT License**.
+You’re free to use, modify, and distribute this code for educational or research purposes.
+
+---
+
+Would you like me to add **diagrams rendered as Markdown tables or code-block art** (like bit-level directory splits) to make the Extendible Hashing section even more visually intuitive for GitHub readers?
