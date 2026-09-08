@@ -12,6 +12,25 @@ This repository contains **complete C++ implementations** of two classic data st
 
 Both implementations include **interactive terminal interfaces** that let you **insert**, **delete**, **search**, and **visualize** how the structures evolve step-by-step.
 
+## Interactive B+ Tree visualizer
+
+The repository also includes a browser-based B+ tree lab backed by the C++ implementation. Every insert, delete, and search is performed by the server; the interface replays the exact snapshots emitted by the tree, including traversal, leaf/internal splits, redistribution, merges, and root-height changes.
+
+From the repository root:
+
+```bash
+make
+./backend_server
+```
+
+Then open [http://localhost:8080/visualizer.html](http://localhost:8080/visualizer.html). Choose the internal order and leaf capacity before inserting keys; changing either value resets the tree. Use Previous, Next, or Play to inspect each operation step.
+
+Run the invariant suite with:
+
+```bash
+make test
+```
+
 ---
 
 ## 📘 1. B+ Tree Implementation

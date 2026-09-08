@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>B+ Tree Lab</title>
+  <style>
+    :root { --bg:#f5f7fb; --panel:#fff; --text:#172033; --muted:#667085; --line:#d8deea; --blue:#2563eb; --blue-soft:#dbeafe; --green:#047857; --green-soft:#d1fae5; --amber:#b45309; --amber-soft:#fef3c7; --red:#b91c1c; --red-soft:#fee2e2; --leaf:#eff6ff; --shadow:0 10px 30px rgba(26,38,60,.08); }
+    * { box-sizing:border-box; }
+    body { margin:0; min-width:320px; color:var(--text); background:var(--bg); font:15px/1.45 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+    button,input { font:inherit; }
+    button { cursor:pointer; }
+    .app { max-width:1440px; margin:auto; padding:24px; }
+    .header { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:20px; }
+    h1 { margin:0; font-size:clamp(1.45rem,3vw,2rem); letter-spacing:-.035em; }
+    .subtitle { color:var(--muted); margin:5px 0 0; }
+    .backend { display:flex; align-items:center; gap:8px; color:var(--muted); font-size:.875rem; white-space:nowrap; }
+    .dot { width:9px; height:9px; border-radius:50%; background:var(--red); } .dot.ready { background:var(--green); }
+    .controls { display:grid; grid-template-columns:auto minmax(170px,1fr) auto; gap:14px; align-items:end; padding:16px; background:var(--panel); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); }
+    .config { display:flex; gap:10px; padding-right:14px; border-right:1px solid var(--line); }
+    label { display:grid; gap:5px; color:var(--muted); font-size:.77rem; font-weight:650; text-transform:uppercase; letter-spacing:.06em; }
+    input { width:100%; min-width:0; padding:9px 10px; color:var(--text); background:#fff; border:1px solid var(--line); border-radius:8px; outline:none; }
+    input:focus { border-color:var(--blue); box-shadow:0 0 0 3px var(--blue-soft); }
+    .config input { width:76px; }
+    .key-field { max-width:260px; }
+    .operations,.player { display:flex; flex-wrap:wrap; gap:8px; }
+    .btn { border:1px solid var(--line); border-radius:8px; padding:9px 12px; color:var(--text); background:#fff; font-weight:650; transition:background .15s,border-color .15s,transform .15s; }
+    .btn:hover:not(:disabled) { background:var(--bg); border-color:#b9c3d5; } .btn:active:not(:disabled) { transform:translateY(1px); }
+    .btn.primary { background:var(--blue); color:#fff; border-color:var(--blue); } .btn.primary:hover:not(:disabled) { background:#1d4ed8; }
+    .btn.danger { color:var(--red); } .btn:disabled { opacity:.48; cursor:not-allowed; }
+    .workspace { display:grid; grid-template-columns:minmax(0,1fr) 320px; gap:18px; margin-top:18px; }
+    .tree-card,.log-card { min-height:570px; background:var(--panel); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); overflow:hidden; }
+    .tree-head,.log-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; border-bottom:1px solid var(--line); }
+    .tree-head h2,.log-head h2 { margin:0; font-size:.92rem; }
+    .legend { display:flex; gap:12px; color:var(--muted); font-size:.78rem; } .legend span { display:flex; align-items:center; gap:5px; } .swatch { width:12px; height:12px; border-radius:3px; border:1px solid var(--line); background:#fff; } .swatch.leaf { background:var(--leaf); } .swatch.active { background:var(--amber-soft); border-color:var(--amber); }
+    .tree-area { min-height:505px; overflow:auto; padding:20px; background-image:radial-gradient(#e5eaf3 1px,transparent 1px); background-size:20px 20px; }
+    #tree { display:block; min-width:100%; min-height:470px; } .empty { display:grid; place-items:center; height:470px; color:var(--muted); text-align:center; }
+    .node { stroke:var(--line); stroke-width:1.5; fill:#fff; filter:drop-shadow(0 2px 2px rgba(20,32,51,.06)); transition:fill .25s,stroke .25s; } .node.leaf { fill:var(--leaf); } .node.active { fill:var(--amber-soft); stroke:var(--amber); stroke-width:3; }
+    .key-divider { stroke:var(--line); stroke-width:1; } .node-text { fill:var(--text); font:600 14px ui-monospace,SFMono-Regular,Menlo,monospace; dominant-baseline:middle; text-anchor:middle; }
+    .edge { stroke:#aab6c9; stroke-width:1.5; fill:none; } .edge.active { stroke:var(--amber); stroke-width:2.5; } .leaf-link { stroke:#60a5fa; stroke-width:1.4; stroke-dasharray:5 4; fill:none; }
+    .log-card { display:flex; flex-direction:column; } .step-count { color:var(--muted); font-size:.78rem; font-variant-numeric:tabular-nums; } #log { flex:1; overflow:auto; padding:10px; }
+    .log-item { display:grid; grid-template-columns:26px 1fr; gap:8px; padding:10px; border-radius:8px; color:var(--muted); font-size:.86rem; } .log-item.active { color:var(--text); background:var(--blue-soft); } .log-index { color:var(--blue); font:700 .72rem ui-monospace,SFMono-Regular,Menlo,monospace; padding-top:2px; }
+    .now { min-height:65px; padding:13px 16px; border-top:1px solid var(--line); color:var(--text); background:#fbfcff; } .now small { display:block; margin-bottom:3px; color:var(--muted); text-transform:uppercase; font-weight:650; letter-spacing:.06em; }
+    .playbar { display:flex; justify-content:space-between; align-items:center; gap:14px; margin-top:18px; padding:12px 16px; background:var(--panel); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow); }
+    .progress { flex:1; height:7px; border-radius:20px; overflow:hidden; background:#e8edf5; } .progress > span { display:block; height:100%; width:0; border-radius:20px; background:var(--blue); transition:width .25s ease; }
+    #notice { min-height:21px; margin:12px 2px 0; color:var(--muted); font-size:.9rem; } #notice.error { color:var(--red); } #notice.success { color:var(--green); }
+    @media (max-width:900px) { .controls { grid-template-columns:1fr; align-items:start; } .config { border:0; padding:0; } .key-field { max-width:none; } .workspace { grid-template-columns:1fr; } .log-card { min-height:260px; } .tree-card { min-height:500px; } #log { max-height:260px; } }
+    @media (max-width:560px) { .app { padding:14px; } .header { display:block; } .backend { margin-top:10px; } .config { flex-wrap:wrap; } .operations .btn { flex:1; } .tree-head { align-items:flex-start; } .legend { display:grid; gap:4px; } .playbar { align-items:flex-start; flex-direction:column; } .progress { width:100%; } }
+  </style>
+</head>
+<body>
+  <main class="app">
+    <header class="header"><div><h1>B+ Tree Lab</h1><p class="subtitle">Run the real C++ B+ tree one step at a time.</p></div><div class="backend"><span id="connection" class="dot"></span><span id="connection-label">Connecting to backend…</span></div></header>
+    <section class="controls" aria-label="B+ tree controls">
+      <div class="config"><label>Internal order <input id="order" type="number" min="3" max="12" value="4"></label><label>Leaf capacity <input id="leaf-capacity" type="number" min="2" max="12" value="3"></label><button id="reset" class="btn danger" type="button">Reset tree</button></div>
+      <label class="key-field">Key <input id="key" type="number" inputmode="numeric" placeholder="e.g. 42" aria-describedby="notice"></label>
+      <div class="operations"><button class="btn primary operation" data-operation="insert" type="button">Insert</button><button class="btn operation" data-operation="search" type="button">Search</button><button class="btn operation" data-operation="delete" type="button">Delete</button></div>
+    </section>
+    <p id="notice" aria-live="polite">Enter a key, then choose an operation.</p>
+    <section class="workspace">
+      <section class="tree-card" aria-labelledby="tree-title"><header class="tree-head"><h2 id="tree-title">Tree structure</h2><div class="legend"><span><i class="swatch"></i> Internal</span><span><i class="swatch leaf"></i> Leaf</span><span><i class="swatch active"></i> Current step</span></div></header><div class="tree-area" id="tree-area"><svg id="tree" role="img" aria-label="B plus tree structure" hidden></svg></div></section>
+      <aside class="log-card" aria-labelledby="log-title"><header class="log-head"><h2 id="log-title">Operation steps</h2><span id="step-count" class="step-count">No operation yet</span></header><div id="log"></div><div class="now"><small>Current action</small><span id="current-message">Ready</span></div></aside>
+    </section>
+    <section class="playbar" aria-label="Animation controls"><div class="player"><button id="previous" class="btn" type="button" disabled>← Previous</button><button id="play" class="btn primary" type="button" disabled>Play</button><button id="next" class="btn" type="button" disabled>Next →</button></div><div class="progress" aria-hidden="true"><span id="progress"></span></div></section>
+  </main>
+  <script>
+  (() => {
+    const api = '/api/'; const $ = id => document.getElementById(id);
+    let baseState = {rootId:'',nodes:{}}; let snapshots = []; let current = -1; let playing = false; let timer = null; let busy = false;
+    const ns = 'http://www.w3.org/2000/svg';
+    const notice = (message, type='') => { $('notice').textContent = message; $('notice').className = type; };
+    const form = data => new URLSearchParams(data).toString();
+    async function request(path, body) {
+      const response = await fetch(api + path, {method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:form(body)});
+      const data = await response.json().catch(() => ({})); if (!response.ok) throw new Error(data.error || 'The backend could not complete that request.'); return data;
+    }
+    function setBusy(value) { busy = value; document.querySelectorAll('button,input').forEach(el => { if (el.id !== 'order' && el.id !== 'leaf-capacity') el.disabled = value; }); if (!value) updateControls(); }
+    function currentState() { return current >= 0 && snapshots[current] ? snapshots[current].state : baseState; }
+    function currentHighlight() { return current >= 0 && snapshots[current] ? snapshots[current].highlightNodeId : ''; }
+    function svg(tag, attributes={}) { const el=document.createElementNS(ns,tag); Object.entries(attributes).forEach(([key,value])=>el.setAttribute(key,value)); return el; }
+    function drawTree(state, highlight) {
+      const tree=$('tree'), nodes=state && state.nodes ? state.nodes : {};
+      if (!state || !state.rootId || !nodes[state.rootId]) { tree.hidden=true; return; }
+      tree.hidden=false; tree.replaceChildren();
+      const positions={}, leafGap=126, levelGap=118, nodeHeight=42; let leafCursor=0, maxLevel=0;
+      function position(id, depth) { const node=nodes[id]; if (!node) return 0; maxLevel=Math.max(maxLevel,depth); if (node.isLeaf || !node.children.length) { const x=leafCursor*leafGap+75; leafCursor++; positions[id]={x,y:65+depth*levelGap}; return x; } const xs=node.children.map(child=>position(child,depth+1)); const x=(xs[0]+xs[xs.length-1])/2; positions[id]={x,y:65+depth*levelGap}; return x; }
+      position(state.rootId,0); const width=Math.max(620,leafCursor*leafGap+80), height=Math.max(470,(maxLevel+1)*levelGap+105); tree.setAttribute('viewBox',`0 0 ${width} ${height}`); tree.setAttribute('width',width); tree.setAttribute('height',height);
+      const marker=svg('marker',{id:'leaf-arrow',viewBox:'0 0 10 10',refX:'8',refY:'5',markerWidth:'5',markerHeight:'5',orient:'auto-start-reverse'}); marker.append(svg('path',{d:'M 0 0 L 10 5 L 0 10 z',fill:'#60a5fa'})); const defs=svg('defs'); defs.append(marker); tree.append(defs);
+      Object.entries(nodes).forEach(([id,node])=>{ if(!node.isLeaf) node.children.forEach(childId=>{ if(!positions[childId])return; const a=positions[id],b=positions[childId]; const active=id===highlight||childId===highlight; tree.append(svg('path',{d:`M ${a.x} ${a.y+nodeHeight/2} C ${a.x} ${a.y+levelGap*.58}, ${b.x} ${b.y-levelGap*.58}, ${b.x} ${b.y-nodeHeight/2}`,class:active?'edge active':'edge'})); }); });
+      Object.entries(nodes).forEach(([id,node])=>{ if(node.isLeaf&&node.nextLeaf&&positions[node.nextLeaf]) { const a=positions[id],b=positions[node.nextLeaf]; tree.append(svg('path',{d:`M ${a.x+Math.max(46,node.keys.length*42)/2} ${a.y} L ${b.x-Math.max(46,nodes[node.nextLeaf].keys.length*42)/2} ${b.y}`,class:'leaf-link','marker-end':'url(#leaf-arrow)'})); } });
+      Object.entries(nodes).forEach(([id,node])=>{ const p=positions[id], cell=42, width=Math.max(46,node.keys.length*cell); const group=svg('g',{transform:`translate(${p.x-width/2},${p.y-nodeHeight/2})`}); group.append(svg('rect',{width,height:nodeHeight,rx:7,class:`node ${node.isLeaf?'leaf ':''}${id===highlight?'active':''}`})); node.keys.forEach((key,index)=>{ if(index){group.append(svg('line',{x1:index*cell,y1:0,x2:index*cell,y2:nodeHeight,class:'key-divider'}));} const text=svg('text',{x:index*cell+cell/2,y:nodeHeight/2+1,class:'node-text'}); text.textContent=key; group.append(text); }); tree.append(group); });
+    }
+    function renderLog() { const log=$('log'); log.replaceChildren(); snapshots.forEach((step,index)=>{const item=document.createElement('div');item.className='log-item'+(index===current?' active':'');item.innerHTML=`<span class="log-index">${String(index+1).padStart(2,'0')}</span><span>${step.message}</span>`;item.addEventListener('click',()=>show(index));log.append(item);}); if(current>=0){const active=log.querySelector('.active');if(active)active.scrollIntoView({block:'nearest'});} }
+    function updateControls() { const has=snapshots.length>0, atStart=current<=0, atEnd=current>=snapshots.length-1; $('previous').disabled=busy||!has||atStart; $('next').disabled=busy||!has||atEnd; $('play').disabled=busy||!has||atEnd; $('play').textContent=playing?'Pause':'Play'; $('step-count').textContent=has?`Step ${current+1} of ${snapshots.length}`:'No operation yet'; $('progress').style.width=has?`${((current+1)/snapshots.length)*100}%`:'0%'; }
+    function show(index) { if(index<0||index>=snapshots.length)return; current=index; drawTree(currentState(),currentHighlight()); $('current-message').textContent=snapshots[current].message; renderLog(); updateControls(); }
+    function stop() { playing=false; clearTimeout(timer); timer=null; }
+    function autoPlay() { if(!playing)return; if(current>=snapshots.length-1){stop();updateControls();return;} timer=setTimeout(()=>{show(current+1);autoPlay();},850); }
+    async function operate(operation) { const raw=$('key').value.trim(); if(!/^-?\d+$/.test(raw)){notice('Enter a whole-number key first.','error');$('key').focus();return;} stop();setBusy(true); try { const result=await request(operation,{key:raw}); snapshots=result.snapshots||[]; current=0; $('key').value=''; if(snapshots.length)show(0); else drawTree(baseState,''); const outcome=operation==='search'?(result.found?'Key found.':'Key not found.'):result.changed?'Operation completed.':'The tree was unchanged.'; notice(outcome,result.found===false?'':'success'); playing=snapshots.length>1; autoPlay(); } catch(error) { notice(error.message,'error'); } finally { setBusy(false); } }
+    async function resetTree() { const order=$('order').value, leafCapacity=$('leaf-capacity').value; stop();setBusy(true); try { const result=await request('config',{order,leafCapacity}); baseState=result.state; snapshots=[];current=-1;drawTree(baseState,'');renderLog();$('current-message').textContent='Ready';notice(result.message,'success'); } catch(error) { notice(error.message,'error'); } finally { setBusy(false); } }
+    async function connect() { try { const response=await fetch(api+'state'); if(!response.ok)throw new Error();baseState=await response.json();$('connection').classList.add('ready');$('connection-label').textContent='C++ backend connected';drawTree(baseState,''); } catch { $('connection-label').textContent='Start the C++ server to connect'; notice('Run “make” and open http://localhost:8080/visualizer.html to use the real backend.','error'); } }
+    document.querySelectorAll('.operation').forEach(button=>button.addEventListener('click',()=>operate(button.dataset.operation))); $('reset').addEventListener('click',resetTree); $('previous').addEventListener('click',()=>{stop();show(current-1);});$('next').addEventListener('click',()=>{stop();show(current+1);});$('play').addEventListener('click',()=>{playing=!playing;if(playing)autoPlay();else stop();updateControls();});$('key').addEventListener('keydown',event=>{if(event.key==='Enter')operate('insert');}); window.addEventListener('resize',()=>drawTree(currentState(),currentHighlight())); connect();
+  })();
+  </script>
+</body>
+</html>
